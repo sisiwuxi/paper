@@ -132,12 +132,45 @@ class halide:
         # pdb.set_trace()
         for y in range(H):
             for x in range(W):
+                x_p1 = x+1 if x+1 < W else 0
                 for i in range(3):
-                    x_p1 = x+1 if x+1 < W else 0
                     y_s1_pi = y-1+i if y-1+i < H else 0
                     bh[i] = (image[x-1,y_s1_pi] + image[x,y_s1_pi] + image[x_p1,y_s1_pi])//3
                 bv[x,y] = (bh[0] + bh[1] + bh[2])//3
 
+        if self.debug:
+            print('image:')
+            print(image)
+            print('bh:')
+            print(bh)
+            print('bv:')
+            print(bv)
+
+    def blur_interleave(self, image, bv, param):
+        '''
+        bh = blur horizontal
+        bv = blur vertical
+        sliding window: intermediate values are computed immediately 
+        before their first use, and freed immediately after their last
+        use. For each new intermediate value produced, one is freed
+        and three are consumed to produce one output value. The computation
+        of new intermediate and output value is tightly coupled in a 
+        sliding window over the image.
+        '''
+        H,W = param
+        bh = np.zeros((W,3))
+        
+        for y in range(-2,H,1):
+            y_p1_m3 = (y+1)%3
+            y_p1 = y+1 if y+1 < H else 0
+            for x in range(W):
+                x_p1 = x+1 if x+1 < W else 0
+                bh[x,y_p1_m3] = (image[x-1,y_p1] + image[x,y_p1] + image[x_p1,y_p1])//3
+                if y < 0:
+                    pass
+                else:
+                    bv[x,y] = (bh[x,(y-1)%3] + bh[x,y%3] + bh[x,y_p1_m3])//3
+        # pdb.set_trace()
         if self.debug:
             print('image:')
             print(image)
@@ -182,7 +215,6 @@ def test():
     # time_end =time.time()
     # print('2.fast_blur duration:', (time_end - time_start))
 
-
     bv_1 = np.zeros((W,H))
     time_start =time.time()
     h.blur_breadth_first(image, bv_1, param)
@@ -194,10 +226,16 @@ def test():
     h.blur_total_fusion(image, bv_2, param)
     time_end =time.time()
     print('2.blur_total_fusion duration:', (time_end - time_start))
-
     u.check_result(bv_1, bv_2, 'blur_total_fusion')
 
-    
+    bv_3 = np.zeros((W,H))
+    time_start =time.time()
+    h.blur_interleave(image, bv_3, param)
+    time_end =time.time()
+    print('3.blur_interleave duration:', (time_end - time_start))
+    u.check_result(bv_1, bv_3, 'blur_interleave')
+
+
 if __name__ == '__main__':
     test()
         
