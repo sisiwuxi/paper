@@ -10,7 +10,7 @@ class halide:
     debug = 0
     def __init__(self, debug = 0) -> None:
         self.debug = debug
-    
+ 
     def blur(self, image, bv, param):
         '''
         bh = blur horizontal
@@ -95,7 +95,57 @@ class halide:
             print(bh)
             print('bv:')
             print(bv)
+    
+    def blur_breadth_first(self, image, bv, param):
+        '''
+        bh = blur horizontal
+        bv = blur vertical
+        breadth first: each function is entirely evaluated before the next one
+        '''
+        H,W = param
+        bh = np.zeros((W,H))
+        # pdb.set_trace()
+        for y in range(H):
+            for x in range(W):
+                x_p1 = x+1 if x+1 < W else 0
+                bh[x,y] = (image[x-1,y] + image[x,y] + image[x_p1,y])//3
+        for y in range(H):
+            for x in range(W):
+                y_p1 = y+1 if y+1 < H else 0
+                bv[x,y] = (bh[x,y-1] + bh[x,y] + bh[x,y_p1])//3
+        if self.debug:
+            print('image:')
+            print(image)
+            print('bh:')
+            print(bh)
+            print('bv:')
+            print(bv)
+    
+    def blur_total_fusion(self, image, bv, param):
+        '''
+        bh = blur horizontal
+        bv = blur vertical
+        total fusion: values are computed on the fly each time that they are needed
+        '''
+        H,W = param
+        bh = np.zeros((3))
+        # pdb.set_trace()
+        for y in range(H):
+            for x in range(W):
+                for i in range(3):
+                    x_p1 = x+1 if x+1 < W else 0
+                    y_s1_pi = y-1+i if y-1+i < H else 0
+                    bh[i] = (image[x-1,y_s1_pi] + image[x,y_s1_pi] + image[x_p1,y_s1_pi])//3
+                bv[x,y] = (bh[0] + bh[1] + bh[2])//3
 
+        if self.debug:
+            print('image:')
+            print(image)
+            print('bh:')
+            print(bh)
+            print('bv:')
+            print(bv)
+    
 def test():
     '''
     preprocessing
@@ -103,12 +153,13 @@ def test():
     ''' 
     np.set_printoptions(threshold=np.inf)
 
+    H,W = 2048,3072
     # H,W = 256,256
     # H,W = 32,32
-    H,W = 16,16
+    # H,W = 16,16
     param = H,W
     np.random.seed(0)
-    image = np.random.randint(10, size=(H,W))
+    image = np.random.randint(10, size=(W,H))
     '''
     bh = a horizontal blur
     bv = a vertical blur
@@ -119,19 +170,32 @@ def test():
     u = Util()
 
 
-    bv_1 = np.zeros((H,W))
-    time_start =time.time()
-    h.blur(image, bv_1, param)
-    time_end =time.time()
-    print('1.blur duration:', (time_end - time_start))
+    # bv = np.zeros((H,W))
+    # time_start =time.time()
+    # h.blur(image, bv, param)
+    # time_end =time.time()
+    # print('1.blur duration:', (time_end - time_start))
 
-    time_start =time.time()
-    bv_2 = np.zeros((H,W))
-    h.fast_blur(image, bv_2, param)
-    time_end =time.time()
-    print('2.fast_blur duration:', (time_end - time_start))
+    # time_start =time.time()
+    # bv = np.zeros((H,W))
+    # h.fast_blur(image, bv, param)
+    # time_end =time.time()
+    # print('2.fast_blur duration:', (time_end - time_start))
 
-    u.check_result(bv_1, bv_2, 'blur')
+
+    bv_1 = np.zeros((W,H))
+    time_start =time.time()
+    h.blur_breadth_first(image, bv_1, param)
+    time_end =time.time()
+    print('1.blur_breadth_first duration:', (time_end - time_start))
+
+    bv_2 = np.zeros((W,H))
+    time_start =time.time()
+    h.blur_total_fusion(image, bv_2, param)
+    time_end =time.time()
+    print('2.blur_total_fusion duration:', (time_end - time_start))
+
+    u.check_result(bv_1, bv_2, 'blur_total_fusion')
 
     
 if __name__ == '__main__':
