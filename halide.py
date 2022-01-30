@@ -5,12 +5,23 @@ from sympy import im
 import time
 import pdb
 from util import *
+import math
 
 class halide:
     debug = 0
     def __init__(self, debug = 0) -> None:
         self.debug = debug
  
+    def debug_print(self, image, bh, bv):
+        if self.debug:
+            print('image:')
+            print(image)
+            print('bh:')
+            print(bh)
+            print('bv:')
+            print(bv)
+        return
+
     def blur(self, image, bv, param):
         '''
         bh = blur horizontal
@@ -28,14 +39,8 @@ class halide:
         # for y in range(1,H-1,1):
             for x in range(W):
                 bv[x,y] = (bh[x,y-1] + bh[x,y] + bh[x,y+1 if y+1 < H else 0])//3
-
-        if self.debug:
-            print('image:')
-            print(image)
-            print('bh:')
-            print(bh)
-            print('bv:')
-            print(bv)
+        self.debug_print(image, bh, bv)
+        return
     
     def fast_blur(self, image, bv, param):
         '''
@@ -86,15 +91,8 @@ class halide:
                         # avg = sum * one_third
                         avg = sum // 3
                         bv[y_start:y_end, x_start] = avg
-
-        # pdb.set_trace()
-        if self.debug:
-            print('image:')
-            print(image)
-            print('bh:')
-            print(bh)
-            print('bv:')
-            print(bv)
+        self.debug_print(image, bh, bv)
+        return
     
     def blur_breadth_first(self, image, bv, param):
         '''
@@ -113,13 +111,9 @@ class halide:
             for x in range(W):
                 y_p1 = y+1 if y+1 < H else 0
                 bv[x,y] = (bh[x,y-1] + bh[x,y] + bh[x,y_p1])//3
-        if self.debug:
-            print('image:')
-            print(image)
-            print('bh:')
-            print(bh)
-            print('bv:')
-            print(bv)
+        # pdb.set_trace()
+        self.debug_print(image, bh, bv)
+        return
     
     def blur_total_fusion(self, image, bv, param):
         '''
@@ -137,14 +131,8 @@ class halide:
                     y_s1_pi = y-1+i if y-1+i < H else 0
                     bh[i] = (image[x-1,y_s1_pi] + image[x,y_s1_pi] + image[x_p1,y_s1_pi])//3
                 bv[x,y] = (bh[0] + bh[1] + bh[2])//3
-
-        if self.debug:
-            print('image:')
-            print(image)
-            print('bh:')
-            print(bh)
-            print('bv:')
-            print(bv)
+        self.debug_print(image, bh, bv)
+        return
 
     def blur_interleave(self, image, bv, param):
         '''
@@ -170,15 +158,76 @@ class halide:
                     pass
                 else:
                     bv[x,y] = (bh[x,(y-1)%3] + bh[x,y%3] + bh[x,y_p1_m3])//3
+        self.debug_print(image, bh, bv)
+        return
+
+    def blur_tiles(self, image, bv, param):
+        '''
+        bh = blur horizontal
+        bv = blur vertical
+        tiles: overlapping regions are processed in parallel, functions are
+        evaluated one after another.
+        '''
+        H,W = param
+        TH,TW = 32,32
+        UB_H = math.ceil(H/TH)
+        UB_W = math.ceil(W/TW)
+        
+        for ty in range(UB_H):
+            for tx in range(UB_W):
+                # parallel
+                bh = np.zeros((TW,TH+2))
+                for y in range(-1, TH+1, 1):
+                    for x in range(TW):
+                        x_p1 = tx*TW+x+1 if tx*TW+x+1 < W else 0
+                        y_ = ty*TH+y if ty*TH+y < H else 0
+                        bh[x,y] = (image[tx*TW+x-1, y_] \
+                                 + image[tx*TW+x,   y_] \
+                                 + image[x_p1,      y_])//3
+                for y in range(TH):
+                    for x in range(TW):
+                        bv[tx*32+x,ty*32+y] = (bh[x, y-1] \
+                                             + bh[x, y] \
+                                             + bh[x, y+1])//3
         # pdb.set_trace()
-        if self.debug:
-            print('image:')
-            print(image)
-            print('bh:')
-            print(bh)
-            print('bv:')
-            print(bv)
-    
+        self.debug_print(image, bh, bv)
+        return
+
+    def blur_slide_within_tile(self, image, bv, param):
+        '''
+        bh = blur horizontal
+        bv = blur vertical
+        sliding window within tiles: tiles are evaluated in parallel, using
+        sliding windows internally.
+        '''
+        H,W = param
+        TH = 8
+        UB_H = math.ceil(H/TH)
+        
+        for ty in range(UB_H):
+            # parallel
+            bh = np.zeros((W,3))
+            for y in range(-2,TH,1):
+                y_p1_m3 = (y+1)%3
+                y_p1 = ty*TH+y+1 if ty*TH+y+1 < H else 0
+                for x in range(W):
+                    x_p1 = x+1 if x+1 < W else 0
+                    bh[x,y_p1_m3] = (image[x-1, y_p1] \
+                                   + image[x,   y_p1] \
+                                   + image[x_p1,y_p1])//3
+                if y < 0:
+                    pass
+                else:
+                    # pdb.set_trace()
+                    for x in range(W):
+                        bv[x,ty*TH+y] = (bh[x,(y-1)%3] \
+                                        + bh[x,y%3] 
+                                        + bh[x,y_p1_m3])//3
+        # pdb.set_trace()
+        self.debug_print(image, bh, bv)
+        return
+
+
 def test():
     '''
     preprocessing
@@ -188,6 +237,7 @@ def test():
 
     H,W = 2048,3072
     # H,W = 256,256
+    # H,W = 64,64
     # H,W = 32,32
     # H,W = 16,16
     param = H,W
@@ -235,6 +285,19 @@ def test():
     print('3.blur_interleave duration:', (time_end - time_start))
     u.check_result(bv_1, bv_3, 'blur_interleave')
 
+    bv_4 = np.zeros((W,H))
+    time_start =time.time()
+    h.blur_tiles(image, bv_4, param)
+    time_end =time.time()
+    print('4.blur_tiles duration:', (time_end - time_start))
+    u.check_result(bv_1, bv_4, 'blur_tiles')
+
+    bv_5 = np.zeros((W,H))
+    time_start =time.time()
+    h.blur_slide_within_tile(image, bv_5, param)
+    time_end =time.time()
+    print('5.blur_slide_within_tile duration:', (time_end - time_start))
+    u.check_result(bv_1, bv_5, 'blur_tiles')
 
 if __name__ == '__main__':
     test()
