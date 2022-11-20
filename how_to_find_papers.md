@@ -5,11 +5,19 @@
 ## search papers in conference list
     - last 5 years
     - use ACM website
-        - sections
-            - https://dl.acm.org/doi/proceedings/10.1145/3519939#heading6
-        - asplos
-            - https://dl.acm.org/conferences
-            - https://dl.acm.org/conference/asplos/proceedings
+      - Association for Computing Machinery
+      - sections
+        - https://dl.acm.org/doi/proceedings/10.1145/3519939#heading6
+      - - https://dl.acm.org/conferences
+        - ASPLOS
+          - Architectural Support for Programming Languages and Operating Systems
+          - https://dl.acm.org/conference/asplos/proceedings
+        - HPDC
+          - High Performance Distributed Computing
+        - CGO
+          - Code Generation and Optimization
+        - DAC
+          - Design Automation Conference
 ## search publications of a research group
     - collect a list of the research groups
     - use google scholar
@@ -43,37 +51,27 @@
 # The template of reading a paper
 Author
 
-
 Institution
-
 
 Submitted
 
-
 Abstract
-
 
 Problem
 
-
 Related work
-
-
-Key insights
-
 
 Key contribution
 
-
-Detail
-
-
 Strengths
-
 
 Weaknesses
 
+Detail
 
 Value
 
 V = innovation * effectiveness * scope
+
+
+Key insights
