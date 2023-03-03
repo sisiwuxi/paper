@@ -22,6 +22,8 @@
   - Andrew Ng
 ## search papers in conference list
   - last 5 years
+  - NeurIPS: https://nips.cc/
+  - EMNLP: https://2022.emnlp.org/
   - CVPR
   - ECCV
   - ICCV
@@ -88,31 +90,32 @@
 
 
 # The template of reading a paper
-Author
 
-Institution
+# title
 
-Submitted
+# Author
 
-Abstract
+# Institution
 
-Problem
+# Submitted
 
-Related work
+# Abstract
 
-Key contribution
+# Problem
 
-Strengths
+# Related work
 
-Weaknesses
+# Key contribution
 
-Detail
+# Strengths
 
-Value
+# Weaknesses
 
-V = innovation * effectiveness * scope
+# Contents
 
+# Value
+- V = innovation * effectiveness * scope
   - IF(impact factor)
   - JCR(journal citation reports)
 
-Key insights
+# Key insights
