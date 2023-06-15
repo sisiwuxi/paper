@@ -69,16 +69,22 @@
 - 100+kW power
 
 ## HBM DIP
+- dojo interface processor
+  - 32GB HBM = 16+16
 - high bandwidth memory for training
   - 800GB/s total memory bandwidth
 - full bandwidth memory + ingest to tile
   - tesla transport protocol(TTP)
   - full custom protocol
 - TTP over ethernet(TTPOE)
+  - private TTP based on PCI-Express
   - enables extending communication over standard ethernet native hardware support
 - standard PCIE host interface
   - 32GB high bandwidth DRAM
   - 50GB/s ethernet bandwidth
+    - NIC connect to other ExaPOD
+    - 400Gb/s
+    - 200Gb/s
   - 900TB/s TTP bandwidth
   - 32GB/s GEN4 PCIE bandwidth
 
@@ -93,9 +99,11 @@
 - 1TB/S ethernet bandwidth
 - 18TB/S aggregate bandwidth to tiles
 - 1 trainning tile
+  - convert ethernet to Z-topology
   - 5 HBM DIP
   - 4.5TB/s = 5*900GB/s
   - 160GB HBM = 5*32GB
+
 
 # host interface
 - ingest proceessing
@@ -131,11 +139,13 @@
 - 362 TFlops
 - 354 dojo core, Fault tolerance
 - 654mm^2
+- 576 bi-direct SerDes, 4TB/s
 ## tile
 - 1xtile <=> 1xA100
 - 11GB SRAM
 - 9050 TFlops
 - 5x5 D1
+- 160GB shared DRAM(HBM)
 # ExaPOD
 - 1320GB SRAM
 - 1.1 EFlops
@@ -154,6 +164,7 @@
 - 362 TFlops
 - single processor, 354 cores, 654mm^2
 - **throughput**
+
 ## A100
 - 40MB SRAM
 - 312 TFlops
@@ -230,6 +241,8 @@
 ## SRAM
 - 1.25MB
 - reduce memory bound
+  - faster, closer between SRAM
+  - reduce times of LD/ST
 - DMA
   - read from DDR/HBM to SRAM
 - list parser engine
@@ -264,10 +277,58 @@
   - die
     - DDR
     - PCIe
-    - die to die 100ns
+    - die to die 
+      - 100ns
+      - 8 boundary
+        - 4 input per cycle, top, down, left, right
+        - 4 output per cycle, top, down, left, right
+      - 64B
+        - Read/Write SRAM per cycle
   - IO
     - 9TB/s
 
+# DOJO V1
+- 6xtile
+- 4xhost
+- 20xDIP
+- 1xswitch
+
+# communication
+## standard
+- bandwidth vs route length
+  - die boundary
+  - tile boundary
+  - longer length more boundary limitation
+- resource utilization vs route length
+  - die boundaries
+  - tile boundary
+  - longer length low utilization
+## Z-dim
+- synchronize through NoC Route between Dojo Core instead of shared memory
+- routing table lookup
+- link traffic balancing
+- dropped link recovery
+## NoC router
+- task generate
+  - remote increment
+  - local increment
+- task monitor
+  - local wait/ack
+- compiler
+  - Communication tree with nodes
+  - Calculation of area planes for division
+
+# pros & cons
+- cons
+  - compiler is very diffirent with other AI compiler
+  - unsupport virtual memory
+    - multi task multi threads
+      - compiler hold
+  - eliminate precise exceptions
+    - how to debug
+  - SW un-firendly
+  - cloudy
+    - reset partial
 # patent
 - https://patents.google.com/patent/US20190235866A1/en?oq=US20190235866A1
 - https://patents.google.com/patent/US20200348909A1/en?oq=US20200348909A1

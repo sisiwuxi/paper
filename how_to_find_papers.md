@@ -15,6 +15,8 @@
   - https://arxiv.org
     - preprint
   - https://sci-hub.41610.org/, https://sci-hub.tw, https://sci-hub.si, https://sci-hub.se
+  - hacker news
+    - https://news.ycombinator.com/
 ## Institution
   - Yoshua Bengio
   - Yann LeCun
