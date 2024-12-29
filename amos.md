@@ -31,7 +31,26 @@
   Ci
   ```
 - The number of possible complex mapping = 3^7 = 21087
-- The number of valid mappings = C31*C11*C31=7*1*7=49
+- The number of valid mappings = (C(3,1)+C(3,2)+C(3,3)) * C(1,1) * (C(3,1)+C(3,2)+C(3,3)) = 7*1*7 = 49
+  - C(3,1)+C(3,2)+C(3,3)=3+3+1=7
+  - M
+    - N
+    - Ho
+    - Wo
+    - N,Ho
+    - N,Wo
+    - Ho,Wo
+    - N,Ho,Wo
+  - N
+    - Co
+  - K
+    - R
+    - S
+    - Ci
+    - R,S
+    - R,Ci
+    - S,Ci
+    - R,S,Ci
 - complex mapping
 # Key contribution
 - Mapping generation flow
